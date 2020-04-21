@@ -1,6 +1,7 @@
 const express = require('express')
 const User = require('../models/user')
 const router = new express.Router()
+const auth = require('../middleware/auth')
 
 
 router.post('/users', async(req, res) => {
@@ -19,13 +20,13 @@ router.post('/users/login', async(req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
         const token = await user.generateAuthToken()
-        res.send({ user, token })
+        res.send({ user: user.getPublicProfile(), token })
     } catch (e) {
         res.status(400).send('something went wrong')
     }
 })
 
-router.get('/users/:id', async(req, res) => {
+router.get('/user/:id', async(req, res) => {
     const _id = req.params.id
 
     try {
@@ -40,14 +41,40 @@ router.get('/users/:id', async(req, res) => {
     }
 })
 
-router.get('/users', async(req, res) => {
-
+router.post('/users/logout', auth, async(req, res) => {
     try {
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token !== req.token
+        })
+        await req.user.save()
+
+        res.send()
+
+    } catch (e) {
+        res.status(500).send()
+    }
+})
+
+router.post('/users/logoutAll', auth, async(req, res) => {
+    try {
+        req.user.tokens = []
+        await req.user.save()
+        res.send()
+    } catch (e) {
+        res.status(500).send()
+    }
+})
+
+router.get('/users/me', auth, async(req, res) => {
+    res.send(req.user)
+
+    // It was for read all users
+    /* try {
         const users = await User.find({})
         res.send(users)
     } catch (e) {
         res.status(400).send(e)
-    }
+    } */
 })
 
 router.patch('/users/:id', async(req, res) => {
