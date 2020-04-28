@@ -1,10 +1,13 @@
 const express = require('express')
+const path = require('path')
 require('./db/mongoose')
 const userRouter = require('./db/routers/user')
 const auth = require('./db/middleware/auth')
 
+const publicDirectoryPath = path.join(__dirname, '../public')
 const app = express()
 const port = process.env.PORT || 3000
+app.use(express.static(publicDirectoryPath))
 
 /* app.use((req, res, next) => {
     console.log(req.method, req.path)
